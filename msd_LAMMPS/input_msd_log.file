@@ -1,0 +1,28 @@
+#KALJ NVE, determine msd (logarithmic in time) 
+
+atom_style atomic 
+boundary p p p #periodic boundary cond. in each direction 
+
+read_data configurazione_iniziale_Python_NVE_T05eq.data # read data file (incl.mass info) 
+pair_style lj/cut 2.5 # Define interaction potential. 
+pair_coeff 1 1 1.0 1.0 2.5 # type type eps sigma rcut 
+pair_coeff 1 2 1.5 0.80 2.0 #typeA typeB epsAB sigmaAB rcutAB=2.5*0.8=2.0 
+pair_coeff 2 2 0.5 0.88 2.2 #typeB typeB epsBB sigmaBB rcutBB=2.5*0.88=2.2 
+
+timestep 0.005 #Delta t 
+neighbor 0.3 bin 
+neigh_modify every 1 delay 0 check yes # Update neighbor 
+
+group A type 1 
+group B type 2 
+
+compute msdA A msd #default com=no and average=no so rvec(t=0) used 
+compute msdB B msd #default com=no and average=no so rvec(t=0) used 
+
+variable tmsd equal logfreq3(1,200,10000000) 
+variable tLJ equal step*dt 
+thermo_style custom v_tLJ c_msdA[4] c_msdB[4] pe etotal 
+thermo v_tmsd # set numerical integrator 
+
+fix nve1 all nve # NVE; default is velocity verlet 
+run 10000000

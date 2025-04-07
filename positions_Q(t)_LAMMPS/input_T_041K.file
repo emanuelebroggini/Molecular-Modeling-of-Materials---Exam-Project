@@ -1,0 +1,37 @@
+# KALJ NVE, logaritmic time steps, save atom positions 
+
+atom_style atomic 
+boundary p p p                                          # periodic boundary conditions in each direction 
+
+read_data configurazione_iniziale_Python_NVE_T041eq.data # read data file (including mass info), Temperature = 0.41K
+
+# Define interaction potential
+pair_style lj/cut 2.5 
+pair_coeff 1 1 1.0 1.0 2.5 # type type eps sigma rcut 
+pair_coeff 1 2 1.5 0.80 2.0 # typeA typeB epsAB sigmaAB rcutAB=2.5*0.8=2.0 
+pair_coeff 2 2 0.5 0.88 2.2 # typeB typeB epsBB sigmaBB rcutBB=2.5*0.88=2.2 
+
+timestep 0.005 # Delta t 
+neighbor 0.3 bin 
+neigh_modify every 1 delay 0 check yes                  # Update neighbor 
+
+group A type 1 
+group B type 2 
+
+# Variables for logarithmic time steps
+variable tmsd equal logfreq3(1,200,10000000) 
+variable tLJ equal step*dt 
+
+# Dump command to save positions of atoms in groups A and B
+dump posA A custom 5000 dump_A_positions_T_041.lammpstrj id type x y z 
+dump posB B custom 5000 dump_B_positions_T_041.lammpstrj id type x y z 
+
+# Modify dump to sort by atom id and output at logarithmic intervals
+dump_modify posA sort id every v_tmsd
+dump_modify posB sort id every v_tmsd
+
+# Set numerical integrator
+fix nve1 all nve 
+
+# Run the simulation
+run 10000000

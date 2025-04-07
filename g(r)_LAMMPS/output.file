@@ -1,0 +1,87 @@
+LAMMPS (17 Apr 2024)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread. (src/comm.cpp:98)
+  using 1 OpenMP thread(s) per MPI task
+Loaded 1 plugins from C:\Users\emanu\AppData\Local\LAMMPS 64-bit 17Apr2024\plugins
+#Import file with positions and velocities of Python and read data with command read_data
+atom_style atomic
+boundary p p p #periodic boundary cond. in each direction
+read_data configurazione_iniziale_Python_NVE_T05eq.data             # read data file (incl.mass info)
+Reading data file ...
+  orthogonal box = (0 0 0) to (9.4 9.4 9.4)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  1000 atoms
+  reading velocities ...
+  1000 velocities
+  read_data CPU = 0.022 seconds
+
+pair_style lj/cut 2.5                                           # Define interaction potential (Lennard-Jones)
+pair_coeff 1 1 1.0 1.0 2.5                                      #typeA typeA epsAA sigmaAA rcutAA=2.5
+pair_coeff 1 2 1.5 0.80 2.0                                     #typeA typeB epsAB sigmaAB rcutAB=2.5*0.8=2.0
+pair_coeff 2 2 0.5 0.88 2.2                                     #typeB typeB epsBB sigmaBB rcutBB=2.5*0.88=2.2
+
+timestep 0.005                                                  #Delta t
+neighbor 0.3 bin
+neigh_modify every 1 delay 0 check yes                          # Update neighbor
+
+# print every 50 MD steps positions and velocities into confdump.*.data files
+dump mydump all custom 50 confdump.*.data id type x y z vx vy vz
+dump_modify mydump sort id
+
+# set numerical integrator
+fix nve1 all nve                                                # NVE; default is velocity Verlet
+
+# Radial distribution functions
+compute rdfAABBAB all rdf 100 1 1 2 2 1 2
+fix myrdf all ave/time 100 8 2000 c_rdfAABBAB[*] file gofrAABBAB_LAMMPS.data mode vector
+
+run 200
+Generated 0 of 1 mixed pair_coeff terms from geometric mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 2.8
+  ghost atom cutoff = 2.8
+  binsize = 1.4, bins = 7 7 7
+  2 neighbor lists, perpetual/occasional/extra = 1 1 0
+  (1) pair lj/cut, perpetual
+      attributes: half, newton on
+      pair build: half/bin/atomonly/newton
+      stencil: half/bin/3d
+      bin: standard
+  (2) compute rdf, occasional, copy from (1)
+      attributes: half, newton on
+      pair build: copy
+      stencil: none
+      bin: none
+Per MPI rank memory allocation (min/avg/max) = 3.184 | 3.184 | 3.184 Mbytes
+   Step          Temp          E_pair         E_mol          TotEng         Press     
+         0   0.5005005      1.0571021      0              1.8071021      52.755507    
+       200   3.4245345     -3.3519087      0              1.7797562      31.955016    
+Loop time of 0.36898 on 1 procs for 200 steps with 1000 atoms
+
+Performance: 234159.033 tau/day, 542.035 timesteps/s, 542.035 katom-step/s
+72.0% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.19836    | 0.19836    | 0.19836    |   0.0 | 53.76
+Neigh   | 0.13254    | 0.13254    | 0.13254    |   0.0 | 35.92
+Comm    | 0.007109   | 0.007109   | 0.007109   |   0.0 |  1.93
+Output  | 0.024339   | 0.024339   | 0.024339   |   0.0 |  6.60
+Modify  | 0.002528   | 0.002528   | 0.002528   |   0.0 |  0.69
+Other   |            | 0.004107   |            |       |  1.11
+
+Nlocal:           1000 ave        1000 max        1000 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:           3190 ave        3190 max        3190 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:          47145 ave       47145 max       47145 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 47145
+Ave neighs/atom = 47.145
+Neighbor list builds = 41
+Dangerous builds = 0
+Total wall time: 0:00:00

@@ -1,0 +1,33 @@
+#KALJ NVE, determine msd (linear in time, here every time step) 
+
+atom_style atomic 
+boundary p p p #periodic boundary cond. in each direction 
+
+# read data file (incl.mass info) 
+read_data configurazione_iniziale_Python_NVE_T05eq.data                 
+
+# Define interaction potential. 
+pair_style lj/cut 2.5                                       
+pair_coeff 1 1 1.0 1.0 2.5 # type type eps sigma rcut 
+pair_coeff 1 2 1.5 0.80 2.0 #typeA typeB epsAB sigmaAB rcutAB=2.5*0.8=2.0 
+pair_coeff 2 2 0.5 0.88 2.2 #typeB typeB epsBB sigmaBB rcutBB=2.5*0.88=2.2 
+
+timestep 0.005 #Delta t 
+neighbor 0.3 bin 
+neigh_modify every 1 delay 0 check yes          # Update neighbor 
+
+thermo_style custom step temp pe ke etotal 
+thermo 2 #print every 2 MDsteps 
+
+group A type 1 
+group B type 2 
+
+compute msdA A msd                                      #default com=no and average=no so rvec(t=0) used 
+fix msdAfix A ave/time 1 1 1 c_msdA[4] file msdA.data 
+compute msdB B msd                                      #default com=no and average=no so rvec(t=0) used 
+fix msdBfix B ave/time 1 1 1 c_msdB[4] file msdB.data 
+
+# set numerical integrator 
+fix nve1 all nve # NVE; default is velocity verlet 
+
+run 1000

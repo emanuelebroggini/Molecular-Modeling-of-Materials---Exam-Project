@@ -1,0 +1,26 @@
+#Import file with positions and velocities of Python and read data with command read_data 
+atom_style atomic 
+boundary p p p #periodic boundary cond. in each direction 
+read_data configurazione_iniziale_Python_NVE_T05eq.data             # read data file (incl.mass info) 
+
+pair_style lj/cut 2.5                                           # Define interaction potential (Lennard-Jones)
+pair_coeff 1 1 1.0 1.0 2.5                                      #typeA typeA epsAA sigmaAA rcutAA=2.5 
+pair_coeff 1 2 1.5 0.80 2.0                                     #typeA typeB epsAB sigmaAB rcutAB=2.5*0.8=2.0 
+pair_coeff 2 2 0.5 0.88 2.2                                     #typeB typeB epsBB sigmaBB rcutBB=2.5*0.88=2.2 
+
+timestep 0.005                                                  #Delta t 
+neighbor 0.3 bin 
+neigh_modify every 1 delay 0 check yes                          # Update neighbor                                               
+
+# print every 50 MD steps positions and velocities into confdump.*.data files 
+dump mydump all custom 50 confdump.*.data id type x y z vx vy vz
+dump_modify mydump sort id 
+
+# set numerical integrator 
+fix nve1 all nve                                                # NVE; default is velocity Verlet 
+
+# Radial distribution functions
+compute rdfAABBAB all rdf 25 1 1 2 2 1 2
+fix myrdf all ave/time 25 8 200 c_rdfAABBAB[*] file gofrAABBAB_LAMMPS.data mode vector
+
+run 200
